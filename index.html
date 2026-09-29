@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Tin Down</title>
 <meta name="theme-color" content="#12352F">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -38,8 +38,8 @@
   --line:rgba(228,242,237,.14);
 }
 *,*::before,*::after{box-sizing:inherit}
-html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+html{height:100%;touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:hidden;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;overflow-x:hidden;min-height:100%;background:var(--bg);color:var(--ink);
   font:16px/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
 h1,h2,h3{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif;margin:0;line-height:1.1}
 button{font:inherit;color:inherit;cursor:pointer}
@@ -95,7 +95,7 @@ nav button[aria-current="page"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--
 /* forms */
 label{display:block;font-weight:600;font-size:15px;margin:16px 0 6px}
 .hint{font-weight:400;color:var(--muted);font-size:13px;display:block}
-input,select{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);
+input,select{width:100%;font-size:16px!important;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);
   background:var(--bg);color:var(--ink);font:inherit}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .seg button{padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);font-weight:600}
@@ -124,6 +124,18 @@ input,select{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid 
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);opacity:0;
   background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;transition:.25s;z-index:30;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.dayhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.dnav{width:40px;height:40px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);font-size:22px;line-height:1}
+.dnav:disabled{opacity:.3;cursor:default}
+.log{list-style:none;padding:0;margin:14px 0 0;border-top:1px solid var(--line)}
+.lrow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+input.ltime{width:auto;min-width:96px;font-weight:600;padding:6px 8px;margin-left:-8px;border:1.5px solid transparent;background:transparent;border-radius:10px;color:var(--ink);font-family:inherit}
+input.ltime:hover,input.ltime:focus{border-color:var(--line);background:var(--bg)}
+.addrow{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.addrow label{font-size:15px}
+.addctl{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:8px}
+.lgap{color:var(--muted);font-size:14px}
+.ldel{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:6px}
 .hidden{display:none!important}
 @media (prefers-reduced-motion:reduce){.breath{transition:none}.btn{transition:none}}
 </style>
@@ -317,12 +329,13 @@ function tinSVG(count,limit){
    <circle cx="${cx}" cy="${cy}" r="160" fill="var(--surface)"/>
    <circle cx="${cx}" cy="${cy}" r="160" fill="none" stroke="var(--tin)" stroke-width="6"/>
    <circle cx="${cx}" cy="${cy}" r="112" fill="none" stroke="var(--line)" stroke-width="1.5"/>`;
-  const pw=Math.min(34,Math.max(12,2*Math.PI*R/slots*0.62)), ph=pw*0.62;
+  const pw=Math.min(36,Math.max(12,2*Math.PI*R/slots*0.62)), ph=pw*0.64, rr=pw*0.1;
   for(let i=0;i<slots;i++){
     const a=-Math.PI/2+2*Math.PI*i/slots, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a), deg=a*180/Math.PI+90;
     let fill="var(--mint-soft)",stroke="var(--mint)";
     if(i<count){ fill=i>=limit?"var(--over)":"var(--ink)"; stroke=fill; }
-    out+=`<rect x="${x-pw/2}" y="${y-ph/2}" width="${pw}" height="${ph}" rx="${ph/2}" fill="${fill}" stroke="${stroke}" stroke-width="1.5" transform="rotate(${deg} ${x} ${y})"/>`;
+    const seam=pw>=22?`<rect x="${x-pw/2+3.5}" y="${y-ph/2+3.5}" width="${pw-7}" height="${ph-7}" rx="${rr*.5}" fill="none" stroke="${i<count?"var(--bg)":"var(--ink)"}" stroke-opacity=".3" stroke-width="1" stroke-dasharray="2.5 2"/>`:"";
+    out+=`<g transform="rotate(${deg} ${x} ${y})"><rect x="${x-pw/2}" y="${y-ph/2}" width="${pw}" height="${ph}" rx="${rr}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>${seam}</g>`;
   }
   return out+`</svg>`;
 }
@@ -385,6 +398,96 @@ function todayStats(){
   </div></div>`;
 }
 
+
+/* ---------- day timeline & hot zones ---------- */
+let viewDay=null;
+const hourLabel=h=>{h=((h%24)+24)%24;return (h%12||12)+(h<12?"am":"pm");};
+const clock=ms=>new Date(ms).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+function gapText(ms){const m=Math.round(ms/60000);if(m<60)return m+" min";const h=Math.floor(m/60);return h+"h"+(m%60?" "+(m%60)+"m":"");}
+function dayViewHTML(){
+  const k=viewDay||today(), d=days[k]||{times:[],cravings:[]};
+  const t0=new Date(k+"T00:00:00").getTime();
+  const times=[...d.times].sort((a,b)=>a-b);
+  const resisted=d.cravings.filter(c=>c.passed);
+  const isToday=k===today();
+  const W=460,H=64,pad=12, X=ms=>pad+Math.min(1,Math.max(0,(ms-t0)/DAY))*(W-2*pad);
+  let svg=`<svg class="chart" viewBox="0 0 ${W} ${H+20}" role="img" aria-label="Pouches logged across the day">
+    <rect x="${pad}" y="14" width="${W-2*pad}" height="36" rx="8" fill="var(--mint-soft)"/>`;
+  [0,3,6,9,12,15,18,21,24].forEach(h=>{const x=pad+h/24*(W-2*pad);
+    svg+=`<line x1="${x}" x2="${x}" y1="14" y2="50" stroke="var(--line)"/>`;
+    if(h%6===0) svg+=`<text x="${x}" y="${H+14}" font-size="11" fill="var(--muted)" text-anchor="${h===0?"start":h===24?"end":"middle"}">${h===24?"12am":hourLabel(h)}</text>`;});
+  if(isToday){const x=X(Date.now());svg+=`<line x1="${x}" x2="${x}" y1="8" y2="56" stroke="var(--over)" stroke-width="2"/>`;}
+  resisted.forEach(c=>{svg+=`<circle cx="${X(c.t)}" cy="32" r="6" fill="var(--mint)" stroke="var(--ink)" stroke-width="1.5"><title>Craving ridden out at ${clock(c.t)}</title></circle>`;});
+  times.forEach(t=>{const x=X(t);svg+=`<rect x="${x-5}" y="22" width="10" height="20" rx="2" fill="var(--ink)" stroke="var(--surface)" stroke-width="1"><title>${clock(t)}</title></rect>`;});
+  svg+=`</svg>`;
+
+  let gaps=[];for(let i=1;i<times.length;i++)gaps.push(times[i]-times[i-1]);
+  const longest=gaps.length?Math.max(...gaps):0, avg=gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:0;
+  const label=isToday?"Today":new Date(t0).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"});
+  const hm=ms=>{const x=new Date(ms);return String(x.getHours()).padStart(2,"0")+":"+String(x.getMinutes()).padStart(2,"0");};
+  const list=times.map((t,i)=>`<li class="lrow"><input type="time" class="ltime" value="${hm(t)}" data-t="${t}" aria-label="Change time of pouch at ${clock(t)}"><span class="lgap">${i?"+"+gapText(t-times[i-1]):"First of the day"}</span><button class="ldel" data-t="${t}" aria-label="Delete pouch at ${clock(t)}">Delete</button></li>`).join("");
+  return `<div class="panel" style="margin-top:8px">
+    <div class="dayhead"><button class="dnav" id="dPrev" aria-label="Previous day">‹</button><h2 style="margin:0">${label}</h2><button class="dnav" id="dNext" aria-label="Next day" ${isToday?"disabled":""}>›</button></div>
+    <div class="chart-scroll">${svg}</div>
+    <div class="legend"><span><i class="key" style="background:var(--ink)"></i>Pouch</span><span><i class="key" style="background:var(--mint);border-radius:50%"></i>Craving ridden out</span>${isToday?`<span><i class="key" style="background:var(--over);width:3px"></i>Now</span>`:""}</div>
+    ${times.length?`<div class="stats" style="margin-top:14px">
+      <div class="stat"><b>${times.length}</b><span>pouch${times.length===1?"":"es"}</span></div>
+      <div class="stat"><b>${gaps.length?gapText(longest):"–"}</b><span>longest gap</span></div>
+      <div class="stat"><b>${clock(times[0])}</b><span>first pouch</span></div>
+      <div class="stat"><b>${gaps.length?gapText(avg):"–"}</b><span>average gap</span></div>
+    </div><ul class="log">${list}</ul><p class="note">Tap a time to change it.</p>`:`<p class="note">No pouches logged ${isToday?"yet today":"this day"}.</p>`}
+    <div class="addrow"><label for="addTime" style="margin:0">Add a pouch you missed</label>
+      <div class="addctl"><input type="time" id="addTime" value="${isToday?hm(Date.now()):"12:00"}"><button class="btn btn-ghost" id="addBtn" style="padding:12px 16px">Add</button></div></div>
+  </div>`;
+}
+function hotZonesHTML(){
+  const now=startOf(Date.now()), grid=[...Array(7)].map(()=>new Array(24).fill(0)), hours=new Array(24).fill(0);
+  let total=0;
+  for(let i=0;i<30;i++){const dd=days[key(now-i*DAY)];if(!dd)continue;
+    dd.times.forEach(t=>{const x=new Date(t);const r=(x.getDay()+6)%7;grid[r][x.getHours()]++;hours[x.getHours()]++;total++;});}
+  if(!total) return `<div class="panel"><h2>Hot zones</h2><p class="note" style="margin:0">Log a few days of pouches and your busiest times will show up here.</p></div>`;
+  const max=Math.max(...grid.flat()), cw=17, ch=20, lw=38, W=lw+24*cw, H=7*ch;
+  const names=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  let svg=`<svg class="chart" viewBox="0 0 ${W} ${H+20}" role="img" aria-label="Pouches by weekday and hour, last 30 days">`;
+  grid.forEach((row,r)=>{
+    svg+=`<text x="0" y="${r*ch+ch/2+4}" font-size="11" fill="var(--muted)">${names[r]}</text>`;
+    row.forEach((c,h)=>{svg+=`<rect x="${lw+h*cw+1}" y="${r*ch+1}" width="${cw-2}" height="${ch-2}" rx="3" fill="${c?"var(--ink)":"var(--mint-soft)"}" ${c?`fill-opacity="${(0.18+0.82*c/max).toFixed(2)}"`:""}><title>${names[r]} ${hourLabel(h)}: ${c}</title></rect>`;});
+  });
+  [0,6,12,18].forEach(h=>{svg+=`<text x="${lw+h*cw}" y="${H+14}" font-size="11" fill="var(--muted)">${hourLabel(h)}</text>`;});
+  svg+=`</svg>`;
+  const top=hours.map((c,h)=>[c,h]).filter(x=>x[0]).sort((a,b)=>b[0]-a[0]).slice(0,3);
+  return `<div class="panel"><h2>Hot zones</h2>
+    <p style="margin:0 0 12px">Your busiest hours over the last 30 days: ${top.map(([c,h])=>`<b>${hourLabel(h)}–${hourLabel(h+1)}</b> (${c})`).join(", ")}.</p>
+    <div class="chart-scroll">${svg}</div>
+    <p class="note">Darker squares mean more pouches in that hour. Plan something else for your darkest spots.</p></div>`;
+}
+function bindDayView(){
+  const shift=n=>{const t=new Date((viewDay||today())+"T12:00:00").getTime()+n*DAY;const k=key(t);if(k>today())return;viewDay=k===today()?null:k;renderProgress();};
+  document.getElementById("dPrev").onclick=()=>shift(-1);
+  const nx=document.getElementById("dNext");if(nx)nx.onclick=()=>shift(1);
+  const k0=viewDay||today(), base=new Date(k0+"T00:00:00");
+  const toMs=v=>{const [h,m]=v.split(":").map(Number);const x=new Date(base);x.setHours(h,m,Math.floor(Math.random()*59),0);return x.getTime();};
+  app.querySelectorAll("input.ltime").forEach(inp=>inp.onchange=async()=>{
+    if(!inp.value)return;
+    const oldT=+inp.dataset.t, nt=toMs(inp.value), dd=dayData(k0);
+    if(k0===today()&&nt>Date.now()){toast("That time hasn't happened yet.");renderProgress();return;}
+    const i=dd.times.indexOf(oldT);if(i>-1)dd.times[i]=nt;
+    await store.saveDay(k0);renderProgress();toast("Moved to "+clock(nt));
+  });
+  document.getElementById("addBtn").onclick=async()=>{
+    const v=document.getElementById("addTime").value;if(!v)return;
+    const nt=toMs(v);
+    if(k0===today()&&nt>Date.now()){toast("That time hasn't happened yet.");return;}
+    dayData(k0).times.push(nt);await store.saveDay(k0);renderProgress();toast("Added at "+clock(nt));
+  };
+  app.querySelectorAll(".ldel").forEach(b=>b.onclick=async()=>{
+    const t=+b.dataset.t, k=viewDay||today(), dd=days[k];
+    if(!confirm("Delete the pouch logged at "+clock(t)+"?"))return;
+    const i=dd.times.indexOf(t);if(i>-1)dd.times.splice(i,1);
+    await store.saveDay(k);renderProgress();toast("Deleted");
+  });
+}
+
 /* ---------- progress ---------- */
 function renderProgress(){
   const n=14, now=startOf(Date.now()), rows=[];
@@ -416,12 +519,14 @@ function renderProgress(){
 
   app.innerHTML=`
    <div class="top"><div class="brand">Progress</div></div>
-   <div class="panel" style="margin-top:8px"><h2>Last 14 days</h2>
+   ${dayViewHTML()}
+   ${hotZonesHTML()}
+   <div class="panel"><h2>Last 14 days</h2>
      <div class="chart-scroll">${svg}</div>
      <div class="legend"><span><i class="key" style="background:var(--ink)"></i>Pouches</span><span><i class="key" style="background:var(--over)"></i>Over limit</span><span><i class="key" style="background:var(--mint)"></i>Daily limit</span></div>
    </div>
    <div class="panel"><div class="stats">
-     <div class="stat"><b>${thisWeek}</b><span>this week${lastWeek?` (${thisWeek<=lastWeek?"down":"up"} ${Math.abs(thisWeek-lastWeek)} from last)`:""}</span></div>
+     <div class="stat"><b>${thisWeek}</b><span>this week${lastWeek?(thisWeek===lastWeek?" (same as last week)":` (${thisWeek<lastWeek?"down":"up"} ${Math.abs(thisWeek-lastWeek)} from last)`):""}</span></div>
      <div class="stat"><b>${month}</b><span>last 30 days</span></div>
      <div class="stat"><b>${money(t.saved)}</b><span>saved since you started</span></div>
      <div class="stat"><b>${Math.round(t.mg).toLocaleString()} mg</b><span>nicotine skipped</span></div>
@@ -432,9 +537,9 @@ function renderProgress(){
      <div class="triggers">${tl.map(([n,c])=>`<div class="trow"><span>${n}</span><div class="ttrack"><div class="tbar" style="width:${c/tmax*100}%"></div></div><span>${c}</span></div>`).join("")}</div>`
      :`<p class="note" style="margin:0">Tap "I'm craving" on the Today tab next time one hits. Your biggest triggers will show up here.</p>`}
    </div>`;
+  bindDayView();
 }
 
-/* ---------- plan tab ---------- */
 function renderPlan(){
   let schedule="";
   if(settings.goal!=="track"){
@@ -490,7 +595,7 @@ document.getElementById("closeOverlay").onclick=closeCraving;
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCraving();});
 
 /* ---------- routing ---------- */
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();window.scrollTo(0,0);});
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;viewDay=null;render();window.scrollTo(0,0);});
 function render(){
   const nav=document.getElementById("nav");
   if(!settings){nav.classList.add("hidden");app.innerHTML=planForm(false);bindPlanForm(false);return;}
@@ -500,6 +605,7 @@ function render(){
 }
 app.innerHTML=`<p class="since" style="margin-top:40vh">Loading…</p>`;
 store.init().then(render);
+["gesturestart","gesturechange"].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(()=>{});}
 setInterval(()=>{if(settings&&tab==="today"&&!document.getElementById("overlay").classList.contains("open")&&!document.activeElement.closest("input,select"))render();},60000);
 </script>
