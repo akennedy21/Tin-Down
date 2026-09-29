@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tin Down</title>
+<meta name="theme-color" content="#12352F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tin Down">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAF1EE; --surface:#F7FAF9; --ink:#12352F; --muted:#557069;
+  --mint:#8FD6BF; --mint-soft:#CFEDE3; --tin:#C4CFCB; --over:#D9583F;
+  --line:rgba(18,53,47,.14);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E2420; --surface:#15302B; --ink:#E4F2ED; --muted:#93AFA7;
+    --mint:#6FCBAE; --mint-soft:#1F4A41; --tin:#35504A; --over:#F07A62;
+    --line:rgba(228,242,237,.14);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E2420; --surface:#15302B; --ink:#E4F2ED; --muted:#93AFA7;
+  --mint:#6FCBAE; --mint-soft:#1F4A41; --tin:#35504A; --over:#F07A62;
+  --line:rgba(228,242,237,.14);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font:16px/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif;margin:0;line-height:1.1}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+.app{max-width:520px;margin:0 auto;padding:20px 18px 110px}
+.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.brand{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;letter-spacing:-.02em}
+.date{color:var(--muted);font-size:14px}
+
+/* tin */
+.tin-wrap{display:grid;place-items:center;margin:8px 0 4px;position:relative}
+.tin{width:min(86vw,340px);height:auto;display:block}
+.tin-center{position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none}
+.big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(64px,20vw,96px);letter-spacing:-.04em;line-height:.9}
+.big-sub{color:var(--muted);font-size:15px;margin-top:6px}
+.over .big{color:var(--over)}
+.since{text-align:center;color:var(--muted);font-size:14px;margin:4px 0 18px}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:0;border-radius:14px;padding:16px 14px;font-weight:600;font-size:16px;transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--ink);color:var(--bg)}
+.btn-craving{background:var(--mint);color:#0F2E28}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.undo{display:block;margin:12px auto 0;background:none;border:0;color:var(--muted);font-size:14px;text-decoration:underline;text-underline-offset:3px}
+
+.panel{background:var(--surface);border-radius:18px;padding:18px;margin-top:18px}
+.panel h2{font-size:19px;margin-bottom:12px;font-weight:700}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:28px;font-weight:700;letter-spacing:-.02em}
+.stat span{color:var(--muted);font-size:14px}
+.note{color:var(--muted);font-size:13px;margin:12px 0 0}
+
+.chart-scroll{overflow-x:auto}
+.chart{width:100%;min-width:320px;height:auto;display:block}
+.legend{display:flex;gap:16px;color:var(--muted);font-size:13px;margin-top:8px;flex-wrap:wrap}
+.key{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+.triggers{display:flex;flex-direction:column;gap:8px}
+.trow{display:grid;grid-template-columns:110px 1fr 28px;align-items:center;gap:10px;font-size:14px}
+.tbar{height:10px;border-radius:5px;background:var(--mint)}
+.ttrack{background:var(--mint-soft);border-radius:5px}
+
+.why{font-family:"Bricolage Grotesque",sans-serif;font-size:20px;font-weight:500;line-height:1.3}
+
+/* nav */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav .inner{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+nav button{background:none;border:0;padding:14px 0 12px;font-weight:600;color:var(--muted);font-size:15px}
+nav button[aria-current="page"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--ink)}
+
+/* forms */
+label{display:block;font-weight:600;font-size:15px;margin:16px 0 6px}
+.hint{font-weight:400;color:var(--muted);font-size:13px;display:block}
+input,select{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);
+  background:var(--bg);color:var(--ink);font:inherit}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);font-size:14px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--mint);border-color:var(--mint);color:#0F2E28}
+
+.onboard h1{font-size:40px;font-weight:800;letter-spacing:-.03em;margin:18px 0 10px}
+.onboard p.lead{color:var(--muted);margin:0 0 8px;max-width:40ch}
+
+/* craving overlay */
+.overlay{position:fixed;inset:0;background:var(--ink);color:var(--bg);z-index:20;display:none;
+  flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+.overlay.open{display:flex}
+.breath{width:200px;height:200px;border-radius:50%;background:var(--mint);opacity:.9;transform:scale(.55);
+  transition:transform 4s ease-in-out;margin:30px 0}
+.phase{font-family:"Bricolage Grotesque",sans-serif;font-size:30px;font-weight:700}
+.remind{max-width:32ch;opacity:.8;margin-top:6px;min-height:3em}
+.overlay .timer{opacity:.7;font-size:14px;margin-top:6px}
+.overlay .row{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;justify-content:center}
+.overlay .btn-ghost{border-color:rgba(255,255,255,.3);color:var(--bg)}
+.overlay .chip{background:transparent;color:var(--bg);border-color:rgba(255,255,255,.3)}
+.overlay .chip[aria-pressed="true"]{background:var(--mint);color:#0F2E28}
+
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);opacity:0;
+  background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;transition:.25s;z-index:30;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.hidden{display:none!important}
+@media (prefers-reduced-motion:reduce){.breath{transition:none}.btn{transition:none}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<nav id="nav" class="hidden"><div class="inner">
+  <button data-tab="today" aria-current="page">Today</button>
+  <button data-tab="progress">Progress</button>
+  <button data-tab="plan">Plan</button>
+</div></nav>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Ride out a craving">
+  <div class="phase" id="phase">Breathe in</div>
+  <div class="breath" id="breath"></div>
+  <div class="remind" id="remind"></div>
+  <div class="timer" id="timer"></div>
+  <div id="after" class="hidden">
+    <p style="margin:20px 0 10px;font-weight:600">What set it off?</p>
+    <div class="chips" id="trigChips" style="justify-content:center"></div>
+    <div class="row">
+      <button class="btn btn-craving" id="passed">Craving passed</button>
+      <button class="btn btn-ghost" id="hadOne">I had one</button>
+    </div>
+  </div>
+  <button class="undo" id="closeOverlay" style="color:var(--bg);opacity:.7;margin-top:28px">Close</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TRIGGERS=["Coffee","Driving","Work","After meals","Stress","Boredom","Social","Waking up","Other"];
+const DAY=86400000;
+let settings=null;           // {start, baseline, target, weeks, costPerTin, perTin, mg, goal, reasons}
+let days={};                 // {"YYYY-MM-DD": {times:[ms], cravings:[{t,trigger}]}}
+let tab="today";
+const app=document.getElementById("app");
+
+/* ---------- storage: artifact db (private per viewer) with localStorage fallback ---------- */
+const store={db:null,uid:null,
+  async init(){
+    try{
+      if(window.claude&&window.claude.use){
+        const [db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);
+        if(db&&user){const id=await user.id(); if(id){this.db=db;this.uid=id;}}
+      }
+    }catch(e){}
+    if(this.db){
+      try{
+        const prof=await this.profile().get();
+        if(prof.exists){ settings=prof.data().settings||null; }
+        const snap=await this.profile().collection("days").limit(500).get();
+        (snap.docs||[]).forEach(d=>{days[d.id]=Object.assign({times:[],cravings:[]},d.data());});
+        return;
+      }catch(e){ this.db=null; }
+    }
+    try{const raw=localStorage.getItem("tindown");if(raw){const o=JSON.parse(raw);settings=o.settings;days=o.days||{};}}catch(e){}
+  },
+  profile(){return this.db.doc("data/users/"+this.uid+"/profile");},
+  async saveSettings(){
+    if(this.db){try{await this.profile().set({settings});}catch(e){toast("Couldn't save. Check your connection.");}}
+    else this.local();
+  },
+  async saveDay(k){
+    if(this.db){try{await this.profile().collection("days").doc(k).set(days[k]);}catch(e){toast("Couldn't save. Check your connection.");}}
+    else this.local();
+  },
+  local(){try{localStorage.setItem("tindown",JSON.stringify({settings,days}));}catch(e){}}
+};
+
+/* ---------- helpers ---------- */
+const key=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");};
+const startOf=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x.getTime();};
+const today=()=>key(Date.now());
+const dayData=k=>days[k]||(days[k]={times:[],cravings:[]});
+const costPerPouch=()=>settings.costPerTin/Math.max(1,settings.perTin);
+function limitFor(ts){
+  const d=Math.floor((startOf(ts)-startOf(settings.start))/DAY);
+  if(settings.goal==="track") return settings.baseline;
+  const total=settings.weeks*7;
+  if(d>=total) return settings.target;
+  const v=settings.baseline-(settings.baseline-settings.target)*(d/total);
+  return Math.max(settings.target,Math.ceil(v));
+}
+function money(n){return "$"+(Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:n<100?2:0,maximumFractionDigits:n<100?2:0});}
+function ago(ms){
+  const m=Math.floor(ms/60000); if(m<1) return "just now";
+  if(m<60) return m+" min"; const h=Math.floor(m/60); if(h<24) return h+"h "+(m%60)+"m";
+  const d=Math.floor(h/24); return d+"d "+(h%24)+"h";
+}
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("show"),1800);}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+/* ---------- onboarding / plan form ---------- */
+function planForm(isEdit){
+  const s=settings||{baseline:10,target:0,weeks:6,costPerTin:6.5,perTin:15,mg:6,goal:"quit",reasons:""};
+  return `
+  <div class="onboard">
+    ${isEdit?`<h2 style="font-size:26px;margin:10px 0 4px">Your plan</h2>`:
+    `<div class="brand">Tin Down</div>
+     <h1>Put the tin down, a little at a time.</h1>
+     <p class="lead">Answer a few questions and you'll get a daily limit that steps down toward your goal.</p>`}
+    <label>What do you want to do?</label>
+    <div class="seg" id="goalSeg">
+      <button type="button" data-goal="quit" aria-pressed="${s.goal!=='track'}">Cut down to a goal</button>
+      <button type="button" data-goal="track" aria-pressed="${s.goal==='track'}">Just track for now</button>
+    </div>
+    <label for="f-base">Pouches on a typical day</label>
+    <input id="f-base" type="number" min="1" max="60" inputmode="numeric" value="${s.baseline}">
+    <div id="taperFields" class="${s.goal==='track'?'hidden':''}">
+      <label for="f-target">Where you want to end up <span class="hint">0 means quit completely</span></label>
+      <input id="f-target" type="number" min="0" max="60" inputmode="numeric" value="${s.target}">
+      <label for="f-weeks">Weeks to get there</label>
+      <select id="f-weeks">${[1,2,3,4,6,8,10,12].map(w=>`<option ${w==s.weeks?'selected':''} value="${w}">${w} week${w>1?'s':''}${w===1?' (close to cold turkey)':''}</option>`).join("")}</select>
+    </div>
+    <label for="f-cost">Price of one tin</label>
+    <input id="f-cost" type="number" min="0" step="0.01" inputmode="decimal" value="${s.costPerTin}">
+    <label for="f-per">Pouches per tin</label>
+    <input id="f-per" type="number" min="1" inputmode="numeric" value="${s.perTin}">
+    <label for="f-mg">Nicotine per pouch (mg)</label>
+    <input id="f-mg" type="number" min="0" step="0.5" inputmode="decimal" value="${s.mg}">
+    <label for="f-why">Why you're doing this <span class="hint">Shown to you when a craving hits</span></label>
+    <input id="f-why" type="text" maxlength="140" placeholder="More money, healthier gums, not reaching for a tin first thing" value="${esc(s.reasons||"")}">
+    <div style="margin-top:22px;display:grid;gap:10px">
+      <button class="btn btn-primary" id="savePlan">${isEdit?"Save plan":"Start my plan"}</button>
+      ${isEdit?`<button class="btn btn-ghost" id="restart">Restart plan from today</button>
+      <button class="btn btn-ghost" id="exportBtn">Back up my data</button>
+      <button class="btn btn-ghost" id="importBtn">Restore from a backup</button>
+      <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+      <button class="undo" id="wipe">Erase all data</button>`:""}
+    </div>
+  </div>`;
+}
+function bindPlanForm(isEdit){
+  let goal=(settings&&settings.goal)||"quit";
+  app.querySelectorAll("#goalSeg button").forEach(b=>b.onclick=()=>{
+    goal=b.dataset.goal;
+    app.querySelectorAll("#goalSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+    document.getElementById("taperFields").classList.toggle("hidden",goal==="track");
+  });
+  const read=()=>({
+    goal,
+    baseline:Math.max(1,parseInt(f("f-base"))||1),
+    target:Math.max(0,parseInt(f("f-target"))||0),
+    weeks:parseInt(f("f-weeks"))||6,
+    costPerTin:Math.max(0,parseFloat(f("f-cost"))||0),
+    perTin:Math.max(1,parseInt(f("f-per"))||15),
+    mg:Math.max(0,parseFloat(f("f-mg"))||0),
+    reasons:f("f-why").trim()
+  });
+  function f(id){return document.getElementById(id).value;}
+  document.getElementById("savePlan").onclick=async()=>{
+    const v=read();
+    if(v.goal==="quit"&&v.target>=v.baseline){toast("Set a goal below your typical day.");return;}
+    settings=Object.assign({start:(settings&&settings.start)||startOf(Date.now())},v);
+    await store.saveSettings(); tab="today"; render(); toast(isEdit?"Plan saved":"Plan started");
+  };
+  if(isEdit){
+    document.getElementById("restart").onclick=async()=>{
+      settings=Object.assign({},settings,read(),{start:startOf(Date.now())});
+      await store.saveSettings(); tab="today"; render(); toast("Plan restarted from today");
+    };
+    document.getElementById("exportBtn").onclick=()=>{
+      const blob=new Blob([JSON.stringify({settings,days})],{type:"application/json"});
+      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tin-down-backup-"+today()+".json";
+      document.body.appendChild(a);a.click();a.remove();
+    };
+    const fileIn=document.getElementById("importFile");
+    document.getElementById("importBtn").onclick=()=>fileIn.click();
+    fileIn.onchange=async()=>{
+      try{const o=JSON.parse(await fileIn.files[0].text());
+        if(!o.settings) throw 0;
+        if(!confirm("Replace what's on this phone with the backup?")) return;
+        settings=o.settings;days=o.days||{};store.local();render();toast("Backup restored");
+      }catch(e){toast("That file isn't a Tin Down backup.");}
+    };
+    document.getElementById("wipe").onclick=async()=>{
+      if(!confirm("Erase your plan and every logged pouch? This can't be undone.")) return;
+      const keys=Object.keys(days); settings=null; days={};
+      if(store.db){try{await store.profile().delete();for(const k of keys){await store.profile().collection("days").doc(k).delete();}}catch(e){}}
+      else store.local();
+      render();
+    };
+  }
+}
+
+/* ---------- today ---------- */
+function tinSVG(count,limit){
+  const slots=Math.max(limit,count,1);
+  const cx=170,cy=170,R=138;
+  let out=`<svg class="tin" viewBox="0 0 340 340" aria-hidden="true">
+   <circle cx="${cx}" cy="${cy}" r="160" fill="var(--surface)"/>
+   <circle cx="${cx}" cy="${cy}" r="160" fill="none" stroke="var(--tin)" stroke-width="6"/>
+   <circle cx="${cx}" cy="${cy}" r="112" fill="none" stroke="var(--line)" stroke-width="1.5"/>`;
+  const pw=Math.min(34,Math.max(12,2*Math.PI*R/slots*0.62)), ph=pw*0.62;
+  for(let i=0;i<slots;i++){
+    const a=-Math.PI/2+2*Math.PI*i/slots, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a), deg=a*180/Math.PI+90;
+    let fill="var(--mint-soft)",stroke="var(--mint)";
+    if(i<count){ fill=i>=limit?"var(--over)":"var(--ink)"; stroke=fill; }
+    out+=`<rect x="${x-pw/2}" y="${y-ph/2}" width="${pw}" height="${ph}" rx="${ph/2}" fill="${fill}" stroke="${stroke}" stroke-width="1.5" transform="rotate(${deg} ${x} ${y})"/>`;
+  }
+  return out+`</svg>`;
+}
+function renderToday(){
+  const k=today(), d=dayData(k), count=d.times.length, limit=limitFor(Date.now());
+  const left=limit-count, over=left<0;
+  const last=Object.values(days).flatMap(x=>x.times).sort((a,b)=>b-a)[0];
+  const tracking=settings.goal==="track";
+  const reasons=settings.reasons?`<div class="panel"><h2>Why you're doing this</h2><p class="why">${esc(settings.reasons)}</p></div>`:"";
+  app.innerHTML=`
+   <div class="top"><div class="brand">Tin Down</div><div class="date">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"})}</div></div>
+   <div class="tin-wrap ${over?'over':''}">
+     ${tinSVG(count,limit)}
+     <div class="tin-center"><div>
+       <div class="big">${over?"+"+(-left):(tracking?count:left)}</div>
+       <div class="big-sub">${over?"over today's limit":tracking?"pouches today":(left===1?"pouch left today":"pouches left today")}</div>
+       <div class="big-sub" style="margin-top:2px">${count} of ${limit}${limit===0?" (nicotine-free day)":""}</div>
+     </div></div>
+   </div>
+   <p class="since">${last?"Last pouch "+ago(Date.now()-last)+(ago(Date.now()-last)==="just now"?"":" ago"):"No pouches logged yet"}</p>
+   <div class="actions">
+     <button class="btn btn-primary" id="log">Log a pouch</button>
+     <button class="btn btn-craving" id="crave">I'm craving</button>
+   </div>
+   ${count?`<button class="undo" id="undo">Undo last pouch</button>`:""}
+   ${todayStats()}
+   ${reasons}`;
+  document.getElementById("log").onclick=async()=>{
+    d.times.push(Date.now()); await store.saveDay(k); render();
+    const l2=limitFor(Date.now())-d.times.length;
+    toast(l2<0?"Logged. Tomorrow is a fresh tin.":"Logged");
+  };
+  document.getElementById("crave").onclick=openCraving;
+  const u=document.getElementById("undo"); if(u) u.onclick=async()=>{d.times.pop();await store.saveDay(k);render();toast("Removed");};
+}
+function totals(){
+  let saved=0,avoided=0,streak=0,resisted=0;
+  const start=startOf(settings.start), now=startOf(Date.now());
+  for(let t=start;t<=now;t+=DAY){
+    const dd=days[key(t)]; const c=dd?dd.times.length:0;
+    if(t<now||c>0){ avoided+=Math.max(0,settings.baseline-c); }
+    if(dd) resisted+=dd.cravings.filter(x=>x.passed).length;
+  }
+  // streak of finished days at or under limit
+  for(let t=now-DAY;t>=start;t-=DAY){
+    const c=(days[key(t)]||{times:[]}).times.length;
+    if(c<=limitFor(t)) streak++; else break;
+  }
+  saved=avoided*costPerPouch();
+  return {saved,avoided,streak,resisted,mg:avoided*settings.mg};
+}
+function todayStats(){
+  const t=totals();
+  const tomorrow=limitFor(Date.now()+DAY);
+  return `<div class="panel"><div class="stats">
+    <div class="stat"><b>${money(t.saved)}</b><span>saved so far</span></div>
+    <div class="stat"><b>${t.avoided}</b><span>pouches skipped</span></div>
+    <div class="stat"><b>${t.streak}</b><span>day${t.streak===1?"":"s"} in a row on target</span></div>
+    <div class="stat"><b>${settings.goal==="track"?t.resisted:tomorrow}</b><span>${settings.goal==="track"?"cravings ridden out":"your limit tomorrow"}</span></div>
+  </div></div>`;
+}
+
+/* ---------- progress ---------- */
+function renderProgress(){
+  const n=14, now=startOf(Date.now()), rows=[];
+  for(let i=n-1;i>=0;i--){const t=now-i*DAY; const dd=days[key(t)]; rows.push({t,c:dd?dd.times.length:0,l:t>=startOf(settings.start)?limitFor(t):null});}
+  const max=Math.max(settings.baseline,...rows.map(r=>r.c),1);
+  const W=460,H=220,pad=28,bw=(W-pad)/n;
+  let svg=`<svg class="chart" viewBox="0 0 ${W} ${H+26}" role="img" aria-label="Pouches per day, last 14 days">`;
+  [0,.5,1].forEach(f=>{const y=H-f*(H-10);svg+=`<line x1="${pad}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${pad-6}" y="${y+4}" text-anchor="end" font-size="11" fill="var(--muted)">${Math.round(f*max)}</text>`;});
+  let path="";
+  rows.forEach((r,i)=>{
+    const x=pad+i*bw, h=r.c/max*(H-10);
+    svg+=`<rect x="${x+bw*.18}" y="${H-h}" width="${bw*.64}" height="${Math.max(h,0)}" rx="4" fill="${r.l!==null&&r.c>r.l?"var(--over)":"var(--ink)"}"><title>${new Date(r.t).toLocaleDateString()}: ${r.c}</title></rect>`;
+    if(r.l!==null){const y=H-r.l/max*(H-10);path+=(path?"L":"M")+(x)+" "+y+" L"+(x+bw)+" "+y+" ";}
+    if(i%2===(n-1)%2) svg+=`<text x="${x+bw/2}" y="${H+18}" text-anchor="middle" font-size="11" fill="var(--muted)">${new Date(r.t).toLocaleDateString(undefined,{month:"numeric",day:"numeric"})}</text>`;
+  });
+  if(path) svg+=`<path d="${path}" fill="none" stroke="var(--mint)" stroke-width="3" stroke-linejoin="round"/>`;
+  svg+=`</svg>`;
+
+  // week & month comparisons
+  const sumRange=(a,b)=>{let s=0;for(let t=a;t<=b;t+=DAY){s+=(days[key(t)]||{times:[]}).times.length;}return s;};
+  const thisWeek=sumRange(now-6*DAY,now), lastWeek=sumRange(now-13*DAY,now-7*DAY), month=sumRange(now-29*DAY,now);
+
+  // triggers & hours
+  const trig={}; let crav=0,passed=0; const hours=new Array(24).fill(0);
+  Object.values(days).forEach(dd=>{dd.cravings.forEach(c=>{crav++;if(c.passed)passed++;if(c.trigger)trig[c.trigger]=(trig[c.trigger]||0)+1;});dd.times.forEach(t=>hours[new Date(t).getHours()]++);});
+  const tl=Object.entries(trig).sort((a,b)=>b[1]-a[1]).slice(0,5), tmax=tl.length?tl[0][1]:1;
+  const peak=hours.indexOf(Math.max(...hours));
+  const t=totals();
+
+  app.innerHTML=`
+   <div class="top"><div class="brand">Progress</div></div>
+   <div class="panel" style="margin-top:8px"><h2>Last 14 days</h2>
+     <div class="chart-scroll">${svg}</div>
+     <div class="legend"><span><i class="key" style="background:var(--ink)"></i>Pouches</span><span><i class="key" style="background:var(--over)"></i>Over limit</span><span><i class="key" style="background:var(--mint)"></i>Daily limit</span></div>
+   </div>
+   <div class="panel"><div class="stats">
+     <div class="stat"><b>${thisWeek}</b><span>this week${lastWeek?` (${thisWeek<=lastWeek?"down":"up"} ${Math.abs(thisWeek-lastWeek)} from last)`:""}</span></div>
+     <div class="stat"><b>${month}</b><span>last 30 days</span></div>
+     <div class="stat"><b>${money(t.saved)}</b><span>saved since you started</span></div>
+     <div class="stat"><b>${Math.round(t.mg).toLocaleString()} mg</b><span>nicotine skipped</span></div>
+   </div>
+   <p class="note">Savings and skipped pouches compare each day to your typical ${settings.baseline}. Days you didn't log count as zero, so keep logging for honest numbers.</p></div>
+   <div class="panel"><h2>Cravings</h2>
+     ${crav?`<p style="margin:0 0 14px">You rode out <b>${passed}</b> of ${crav} craving${crav===1?"":"s"}.${hours.some(h=>h)?` You reach for a pouch most around <b>${new Date(2000,0,1,peak).toLocaleTimeString([], {hour:"numeric"})}</b>.`:""}</p>
+     <div class="triggers">${tl.map(([n,c])=>`<div class="trow"><span>${n}</span><div class="ttrack"><div class="tbar" style="width:${c/tmax*100}%"></div></div><span>${c}</span></div>`).join("")}</div>`
+     :`<p class="note" style="margin:0">Tap "I'm craving" on the Today tab next time one hits. Your biggest triggers will show up here.</p>`}
+   </div>`;
+}
+
+/* ---------- plan tab ---------- */
+function renderPlan(){
+  let schedule="";
+  if(settings.goal!=="track"){
+    const weeks=[];
+    for(let w=0;w<=settings.weeks;w++){const ts=startOf(settings.start)+w*7*DAY;weeks.push({w,l:limitFor(ts),ts});}
+    const cur=Math.floor((startOf(Date.now())-startOf(settings.start))/DAY/7);
+    schedule=`<div class="panel"><h2>Your step-down</h2>
+      <div class="triggers">${weeks.map(x=>`<div class="trow" style="grid-template-columns:110px 1fr 28px;${x.w===cur?"font-weight:700":""}">
+        <span>${x.w===settings.weeks?"Goal":"Week "+(x.w+1)}${x.w===cur?" (now)":""}</span>
+        <div class="ttrack"><div class="tbar" style="width:${settings.baseline?x.l/settings.baseline*100:0}%;${x.w===cur?"background:var(--ink)":""}"></div></div><span>${x.l}</span></div>`).join("")}</div>
+      <p class="note">Daily limit at the start of each week. It eases down a little every day in between.</p></div>`;
+  }
+  app.innerHTML=schedule+`<div class="panel">${planForm(true)}</div>`;
+  bindPlanForm(true);
+}
+
+/* ---------- craving overlay ---------- */
+let breathTimer=null, chosenTrigger=null;
+function openCraving(){
+  const ov=document.getElementById("overlay"), br=document.getElementById("breath"), ph=document.getElementById("phase"),
+        tm=document.getElementById("timer"), after=document.getElementById("after"), rm=document.getElementById("remind");
+  ov.classList.add("open"); after.classList.add("hidden"); chosenTrigger=null;
+  rm.textContent=settings.reasons?settings.reasons:"Most cravings fade within a few minutes. Stay with the breath.";
+  const chips=document.getElementById("trigChips");
+  chips.innerHTML=TRIGGERS.map(t=>`<button class="chip" aria-pressed="false">${t}</button>`).join("");
+  chips.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{chosenTrigger=c.textContent;chips.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c));});
+  const phases=[["Breathe in",1],["Hold",1],["Breathe out",.55],["Hold",.55]];
+  let i=0, secs=60;
+  const step=()=>{const [p,s]=phases[i%4];ph.textContent=p;br.style.transform=`scale(${s})`;i++;};
+  step();
+  tm.textContent="1:00";
+  clearInterval(breathTimer);
+  let tick=0;
+  breathTimer=setInterval(()=>{
+    tick++; secs--; tm.textContent="0:"+String(Math.max(secs,0)).padStart(2,"0");
+    if(tick%4===0) step();
+    if(secs<=0){clearInterval(breathTimer);ph.textContent="How's the craving?";br.style.transform="scale(.55)";tm.textContent="";after.classList.remove("hidden");}
+  },1000);
+  setTimeout(()=>{after.classList.remove("hidden");},15000);
+  document.getElementById("closeOverlay").focus();
+}
+function closeCraving(){clearInterval(breathTimer);document.getElementById("overlay").classList.remove("open");}
+async function logCraving(passed){
+  const k=today(), d=dayData(k);
+  d.cravings.push({t:Date.now(),trigger:chosenTrigger,passed});
+  if(!passed) d.times.push(Date.now());
+  await store.saveDay(k); closeCraving(); render();
+  toast(passed?"Nice. That's one you didn't need.":"Logged. Next one's a new chance.");
+}
+document.getElementById("passed").onclick=()=>logCraving(true);
+document.getElementById("hadOne").onclick=()=>logCraving(false);
+document.getElementById("closeOverlay").onclick=closeCraving;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCraving();});
+
+/* ---------- routing ---------- */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();window.scrollTo(0,0);});
+function render(){
+  const nav=document.getElementById("nav");
+  if(!settings){nav.classList.add("hidden");app.innerHTML=planForm(false);bindPlanForm(false);return;}
+  nav.classList.remove("hidden");
+  nav.querySelectorAll("button").forEach(b=>{if(b.dataset.tab===tab)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");});
+  if(tab==="today") renderToday(); else if(tab==="progress") renderProgress(); else renderPlan();
+}
+app.innerHTML=`<p class="since" style="margin-top:40vh">Loading…</p>`;
+store.init().then(render);
+if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(()=>{});}
+setInterval(()=>{if(settings&&tab==="today"&&!document.getElementById("overlay").classList.contains("open")&&!document.activeElement.closest("input,select"))render();},60000);
+</script>
+</body>
+</html>
